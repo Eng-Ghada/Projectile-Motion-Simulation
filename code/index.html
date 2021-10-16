@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+
+        }
+
+        body {
+            font-family: 'Lora', serif;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="text-center  m-5 pb-3">
+            <h1>Projectile Motion</h1>
+        </div>
+    </header>
+
+    <section>
+        <div>
+
+            <div class="row ">
+                <div class="col-md-5">
+                    <div class=" m-auto  text-center">
+                        <div class="m-3 ">
+
+                            <label class="col-8 mb-2 " for="velocity">Enter Velocity of Projectile m/s</label>
+                            <input class="col-6" id="velocity" type="number">
+                        </div>
+
+                        <div class="m-3">
+                            <label class="col-8 mt-3 mb-2" for="angle">Enter Angle of Projectile in Degree</label>
+                            <input class="col-6" id="angle" type="number">
+                        </div>
+
+                        <div class="m-5">
+                            <button id="launch" class="btn btn-outline-success mx-2">launch</button>
+                            <button id="reset" class="btn btn-outline-warning">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-7 ">
+                    <div class="row ">
+                        <div class="col-1 align-self-center">
+                            <label id="y" class=" text-danger"></label>
+                        </div>
+                        <div class="col-9">
+                            <canvas id="canvas" style="width:100%; background-color: lightblue;"></canvas>
+                            <label id="x" class="mx-5 text-danger "></label>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+
+    <script>
+
+
+        let launch_btn = document.getElementById("launch");
+        let reset_btn = document.getElementById("reset");
+        let canvas = document.getElementById("canvas");
+        const context = canvas.getContext('2d');
+        const g = 9.81;
+
+        reset_btn.addEventListener("click", reset);
+        launch_btn.addEventListener("click", excuteProjectileMotion);
+
+
+        //reset canvas
+        function reset() {
+            document.getElementById("angle").value = '';
+            document.getElementById("velocity").value = '';
+            x.innerHTML = "";
+            y.innerHTML = "";
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        //x-position calculation
+        function xpos(velocity, angle, time) {
+            let x = time * velocity * Math.cos(degToRad(angle));
+            return x;
+        }
+
+
+        //y-position calculation
+        function ypos(velocity, angle, time) {
+            let y = time * velocity * Math.sin(degToRad(angle)) - (0.5 * g * time * time);
+            return y;
+        }
+
+
+        //
+        async function excuteProjectileMotion() {
+            let angle = document.getElementById("angle").value;
+            let velocity = document.getElementById("velocity").value;
+            let x = document.getElementById("x");
+            let y = document.getElementById("y");
+
+            if (angle === "") {
+                alert("Please Enter The Angle");
+            }
+
+            if (velocity === "") {
+                alert("Please Enter The Velocity");
+            }
+
+            if (angle > 90) {
+                alert("Please Enter a correct Angle");
+
+            }
+
+
+            let time1 = fullTime(velocity, angle);
+            setCanvas(velocity, angle);
+
+            context.lineWidth = 30;
+            context.beginPath();
+            context.moveTo(0, 0);
+            context.lineTo(0, canvas.height);
+            context.lineTo(canvas.width, canvas.height);
+            context.stroke();
+
+            //drawing path of projectile motion
+            for (let t = 0; t <= time1; t = t + 0.2) {
+
+                context.lineCap = "round";
+                context.lineWidth = 10;
+                context.strokeStyle = "#FF0000";
+                context.beginPath();
+                context.arc(xpos(velocity, angle, t) / 2, canvas.height - ypos(velocity, angle, t) / 2, maxHeight(velocity, angle) / 2, 0, degToRad(.1), 0);
+                context.stroke();
+                context.restore();
+                await sleep(60);
+            }
+
+
+            x.innerHTML = "x= " + Math.ceil(xpos(velocity, angle, time1)) + " m";
+            y.innerHTML = "y= " + Math.ceil(maxHeight(velocity, angle)) + " m";
+        }
+
+
+        //delay function
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        //full time of porjectile motion
+        function fullTime(velocity, angle) {
+            let t = 2 * velocity * Math.sin(degToRad(angle)) / g;
+            return t;
+        }
+
+
+        //set dimensions of canvas
+        function setCanvas(velocity, angle) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            if (canvas.width < distance(velocity, angle)) {
+                canvas.width = distance(velocity, angle);
+            }
+
+            if (canvas.height < maxHeight(velocity, angle)) {
+                canvas.height = maxHeight(velocity, angle) + 10;
+
+            }
+        }
+
+
+        // convert degree to radian
+        function degToRad(angle) {
+            let radAngle = angle * (Math.PI) / 180;
+            return radAngle;
+        }
+
+
+        //calculate max height of projectile
+        function maxHeight(velocity, angle) {
+            let maxH = (velocity * velocity * (1 - Math.cos(2 * (degToRad(angle)))) / (4 * g));
+            console.log(maxH);
+            return maxH;
+        }
+
+
+        //max range of projectile
+        function distance(velocity, angle) {
+            let d = ((velocity * velocity) * Math.sin(2 * degToRad(angle))) / g;
+            return d;
+        }
+
+
+
+    </script>
+</body>
+
+</html>
